@@ -23,6 +23,7 @@ module.exports = {
         },
         'redz': '#DB4444',
         'bluez': '#1B90D2',
+        'grayz': '#D9D9D9',
       },
     },
   },

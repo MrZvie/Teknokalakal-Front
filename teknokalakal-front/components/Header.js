@@ -5,8 +5,8 @@ export default function Header() {
   return (
     <header className="border-b border-black ">
       <Center>
-        <div className="max-w-[800px] my-0 mx-auto py-3 px-0 flex justify-between items-center ">
-            <Link className="text-aqua-forest-600" href="/">
+        <div className=" py-3 px-0 flex justify-between items-center ">
+            <Link className="text-aqua-forest-600 font-bold" href="/">
               TeknoKalakal
             </Link>
             <nav className="flex gap-5">
