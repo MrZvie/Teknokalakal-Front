@@ -1,7 +1,12 @@
 import Link from "next/link";
 import Center from "./Center";
+import { useContext } from "react";
+import { CartContext } from "./CartContext";
 
 export default function Header() {
+  // Accessing the cart products from CartContext to display the cart count
+  const {cartProducts} = useContext(CartContext);
+
   return (
     <header className="border-b border-black ">
       <Center>
@@ -15,7 +20,7 @@ export default function Header() {
               <Link href={"/about"}>About</Link>
               <Link href={"/contact"}>Contact</Link>
               <Link href={"/account"}>Account</Link>
-              <Link href={"/cart"}>Cart (0)</Link>
+              <Link href={"/cart"}>Cart ({cartProducts.length})</Link>
             </nav>
         </div>
       </Center>

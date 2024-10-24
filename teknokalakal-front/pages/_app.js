@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Green from "@/components/Green";
 import "@/styles/globals.css";
+import { CartContextProvider } from '@/components/CartContext';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -11,7 +12,9 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Green />
-      <Component {...pageProps} />
+      <CartContextProvider>
+        <Component {...pageProps} />
+      </CartContextProvider>
     </>
   );
 }
