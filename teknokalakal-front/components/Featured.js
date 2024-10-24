@@ -1,9 +1,19 @@
 import Link from "next/link";
 import Center from "./Center";
 import CartIcon from "./icons/CartIcon";
+import { useContext } from "react";
+import { CartContext } from "./CartContext";
 
 
 export default function Featured({product}) {
+  // Get addProduct function from CartContext using useContext hook
+  const {addProduct} = useContext(CartContext);
+  // Function to add the featured product to the cart using its ID
+  function addFeaturedToCart() {
+    addProduct(product._id);
+  }
+
+
   return (
     <div className="bg-aqua-forest-600 rounded-md text-white mt-7 w-[800px] mx-auto py-5 px-5">
       <Center style={{padding: "0px"}}>
@@ -31,7 +41,7 @@ export default function Featured({product}) {
                   />
                 </svg>
               </Link >
-              <button className="bg-aqua-forest-500 py-2 px-5 flex items-center hover:bg-aqua-forest-700 justify-center gap-2 rounded-md group">
+              <button onClick={addFeaturedToCart} className="bg-aqua-forest-500 py-2 px-5 flex items-center hover:bg-aqua-forest-700 justify-center gap-2 rounded-md group">
                 Add to Cart
                 <CartIcon className="size-7 transition-transform group-hover:translate-x-1" />
               </button>
