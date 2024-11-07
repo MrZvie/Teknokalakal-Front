@@ -1,44 +1,56 @@
-const { createContext, useState, useEffect } = require("react");
+import { createContext, useState, useEffect } from "react";
+import axios from "axios";
 
 export const CartContext = createContext({});
 
 export function CartContextProvider({ children }) {
-
-    // this function will add the product id to the cartProducts array
-    function addProduct(productId) {
-        setCartProducts(prev => [...prev, productId]);
-    }
-    // this function will remove the product id from the cartProducts array
-    function removeProduct(productId){
-      setCartProducts(prev => {
-            const pos = prev.indexOf(productId);
-            if (pos !== -1) {
-                return prev.filter((_value, index) => index !== pos);
-            }
-            return prev;
-        });
-    }
-
-    // this is the local storage that will be used to store the cartProducts array 
     const ls = typeof window !== "undefined" ? window.localStorage : null;
 
-    // The cartProducts is the array of the product id
-    const [cartProducts,setCartProducts] = useState([]);
-    // this is the useEffect that will save the cartProducts to the local storage
-    useEffect(() =>{
-        if(cartProducts?.length > 0) {
-            ls?.setItem('cart',JSON.stringify(cartProducts));
-        }
-    }, [cartProducts]);
-    // this is the useEffect that will get the cartProducts from the local storage
+    const [cartProducts, setCartProducts] = useState([]); 
+
+    // Load cart from local storage when component mounts
     useEffect(() => {
-        if (ls && ls.getItem('cart')) {
-            setCartProducts(JSON.parse(ls.getItem('cart')));
+        const savedCart = ls?.getItem('cart');
+        if (savedCart) {
+            setCartProducts(JSON.parse(savedCart)); // Parse the saved cart data from string to array of objects if it exists in local storage 
         }
     }, []);
-  return (
-    <CartContext.Provider value={{cartProducts,setCartProducts,addProduct,removeProduct}}>
-      {children}
-    </CartContext.Provider>
-  );
+
+    // Save cart to local storage whenever it changes
+    useEffect(() => {
+        if (cartProducts.length > 0) {
+            ls.setItem('cart', JSON.stringify(cartProducts));
+        } else {
+            ls.removeItem('cart'); // Clear local storage when cart is empty
+        }
+    }, [cartProducts]);
+
+    // Add product by ID and manage quantity + stock
+    function addProduct(productId) {
+        setCartProducts((prev) => [...prev, productId]); // Just store IDs
+      }
+
+    // Remove one quantity or remove product if quantity is 1
+    function removeProduct(productId) {
+        setCartProducts((prev) => {
+          const index = prev.indexOf(productId);
+          if (index > -1) {
+            const newCart = [...prev];
+            newCart.splice(index, 1); // Remove one instance
+            return newCart;
+          }
+          return prev;
+        });
+      } 
+
+    // Clear the entire cart
+    function clearCart() {
+        setCartProducts([]);
+    }
+
+    return (
+        <CartContext.Provider value={{ cartProducts, addProduct, removeProduct, clearCart }}>
+            {children}
+        </CartContext.Provider>
+    );
 }

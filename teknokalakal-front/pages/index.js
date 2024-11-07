@@ -1,23 +1,22 @@
 import Featured from "@/components/Featured";
-import Header from "@/components/Header";
+import Layout from "@/components/Layout";
 import NewProducts from "@/components/NewProducts";
 import { mongooseConnect } from "@/lib/mongoose";
 import { Product } from "@/models/Products";
 
 export default function HomePage({ featuredProduct, newProducts }) {
   return (
-    <div>
-      <Header />
+    <Layout>
       <Featured product = {featuredProduct} />
       <NewProducts products = {newProducts} />
       
-    </div>
+    </Layout>
   );
 }
 
 export async function getServerSideProps() {
   // this is where you can set kung anong ffeatured products mo dito papasok yung id niya or Define the ID of the featured product to fetch from the database
-  const featuredProductId = '66fecf446c322048ef192e09';
+  const featuredProductId = '66fecfbd6c322048ef192e7a';
   
   await mongooseConnect();
   
