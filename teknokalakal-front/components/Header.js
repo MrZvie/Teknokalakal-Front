@@ -16,6 +16,7 @@ export default function Header() {
             </Link>
             <nav className="flex gap-5">
               <Link href={"/"}>Home</Link>
+              <Link href={"/products"}>All Products</Link>
               <Link href={"/forum"}>Forum</Link>
               <Link href={"/about"}>About</Link>
               <Link href={"/contact"}>Contact</Link>

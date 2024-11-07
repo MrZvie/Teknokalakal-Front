@@ -8,7 +8,7 @@ export default function ProductBox({_id, title, description, price, images}) {
     const formattedPrice = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(price);
 
     // so when the customer click the image or the tile they will e redirected to the id of the product
-    const url = '/product/'+_id;
+    const url = '/products/'+_id;
     // this is the context that will add the product to the cart
     const {addProduct} = useContext(CartContext);
 
@@ -39,7 +39,7 @@ export default function ProductBox({_id, title, description, price, images}) {
               className="border-2 border-aqua-forest-600 rounded-lg transition-all group hover:bg-aqua-forest-300 hover:scale-105"
             >
               <CartIcon className="text-aqua-forest-600 w-[25px] h-[25px] group-hover:text-white" />
-            </button>{" "}
+            </button>
           </div>
         </div>
       </div>
