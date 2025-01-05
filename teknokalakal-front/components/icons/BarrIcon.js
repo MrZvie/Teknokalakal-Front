@@ -1,4 +1,4 @@
-export default function BarrIcon({className = 'w-6 h-6'}) {
+export default function BarrIcon({className = 'w-10 h-9'}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

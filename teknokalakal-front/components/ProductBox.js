@@ -13,35 +13,56 @@ export default function ProductBox({_id, title, description, price, images}) {
     const {addProduct} = useContext(CartContext);
 
     return (
-      <div className="border-2 h-[220px] bg-gray-400 rounded-md p-2 border-gray-500">
-        <div className="bg-white p-5 max-w-full h-[120px] rounded-lg max-h-full flex justify-center items-center">
-          {images.length > 0 ? (
-            <Link href={url}>
-              <img
-                className="w-36 h-[100px] rounded-md object-cover"
-                src={images[0].link}
-                alt={images}
-              />
-            </Link>
-          ) : (
-            <div>No image available</div>
-          )}
-        </div>
-        <div className="mt-1">
+      <div className="border border-gray-200 rounded-lg shadow-sm p-2 flex flex-col h-[260px] sm:h-[320px] bg-aqua-forest-600 hover:shadow-lg hover:-translate-y-1 transition duration-300">
+      {/* Image Container */}
+      <div className="rounded-lg overflow-hidden relative group">
+        {images?.length > 0 ? (
           <Link href={url}>
-            <h2 className="text-[16px] text-center font-medium m-1">{title}</h2>
+            <img
+              className="w-full h-[120px] sm:h-[160px] object-cover transform transition duration-300 group-hover:scale-110"
+              src={images[0].link}
+              alt={title}
+            />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300"></div>
           </Link>
-          <div className="flex items-center justify-center gap-5">
-            <div className="text-[18px] font-medium ">{formattedPrice}</div>
-            <button
-              onClick={() => addProduct(_id)}
-              style={{ padding: "5px" }}
-              className="border-2 border-aqua-forest-600 rounded-lg transition-all group hover:bg-aqua-forest-300 hover:scale-105"
-            >
-              <CartIcon className="text-aqua-forest-600 w-[25px] h-[25px] group-hover:text-white" />
-            </button>
+        ) : (
+          <div className="h-[120px] sm:h-[160px] bg-gray-100 flex items-center justify-center text-gray-500">
+            No Image Available
           </div>
+        )}
+      </div>
+
+      {/* Product Details */}
+      <div className="flex flex-col flex-grow justify-between p-2">
+        {/* Title */}
+        <Link href={url}>
+          <h2 className="text-sm sm:text-base font-semibold text-center text-white line-clamp-2 hover:text-gray-300 transition">
+            {title}
+          </h2>
+        </Link>
+
+        {/* Description */}
+        {description && (
+          <p className="text-xs sm:text-sm text-gray-300 line-clamp-2 mt-1">
+            {description}
+          </p>
+        )}
+
+        {/* Price and Button */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="text-sm sm:text-base font-semibold text-white">
+            {formattedPrice}
+          </div>
+          <button
+            onClick={() => addProduct(_id)}
+            className="bg-green-600 text-white flex items-center gap-1 rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-green-700 hover:scale-105 transition-transform"
+          >
+            <CartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-xs sm:text-sm font-medium">Add</span>
+          </button>
         </div>
       </div>
+    </div>
     );
 }

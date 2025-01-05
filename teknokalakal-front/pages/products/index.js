@@ -8,15 +8,16 @@ export default function ProductsPage({products}) {
     return (
       <Layout>
         <Center>
-          <h1 className="text-2xl font-semibold my-3 text-gray-800">
-            All products
-          </h1>
-          <div className="grid grid-cols-4 gap-7 pt-[10px]">
-            {/* Render the products */}
-              {products?.length > 0 && products.map((product) => (
-                  <ProductBox key={product._id} {...product} />
-                ))}
-          </div>
+        <h1 className="text-2xl font-semibold my-4 text-gray-800 text-center">
+          All Products
+        </h1>
+        {/* Responsive Grid Layout */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-2">
+          {products?.length > 0 &&
+            products.map((product) => (
+              <ProductBox key={product._id} {...product} />
+            ))}
+        </div>
         </Center>
       </Layout>
     );

@@ -6,9 +6,11 @@ import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import Layout from "@/components/Layout";
+import { useSession } from "next-auth/react";
 
 export default function CartPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,44 +21,40 @@ export default function CartPage() {
   const [postalCode, setPostalCode] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shippingFee, setShippingFee] = useState(0);
 
     // this is the context that will be used to access the cartProducts
-    const { cartProducts, addProduct, removeProduct } = useContext(CartContext);
+    const { cartProducts, removeProduct, UpdateQuantity, clearCart } = useContext(CartContext);
     
-
-    // this is the state that will store the products
-    const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
+  // Pre-fill form with session data
+  useEffect(() => {
+    if (session?.user) {
+      setName(session.user.name || "");
+      setEmail(session.user.email || "");
+      setPhone(session.user.phone || "");
+      setProvince(session.user.address?.province || "");
+      setMunicipality(session.user.address?.municipality || "");
+      setBarangay(session.user.address?.barangay || "");
+      setPostalCode(session.user.address?.postalCode || "");
+      setStreetAddress(session.user.address?.streetAddress || "");
+    }
+  }, [session]);
 
-    // Fetch products when cartProducts change
-    const fetchProducts = useCallback(async () => {
-      if (cartProducts.length === 0) {
-        setProducts([]);
-        return;
-      }
-      setIsLoading(true);
+  // Fetch shipping fee from the database when the component mounts
+  useEffect(() => {
+    const fetchShippingFee = async () => {
       try {
-        const response = await axios.post("/api/cart", { ids: cartProducts });
-        setProducts(prevProducts => {
-          const newProducts = response.data.filter(newProduct => 
-            !prevProducts.some(prevProduct => prevProduct._id === newProduct._id)
-          );
-          return [...prevProducts, ...newProducts];
-        });
+        const response = await axios.get("/api/shipping-fee");
+        setShippingFee(response.data.shippingFee); 
+        console.log("Shipping fee:", response.data.shippingFee);
       } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching shipping fee:", error);
       }
-    }, [cartProducts]);
-  
-    // Fetch products only when cartProducts change (initial load or when products are added/removed)
-    useEffect(() => {
-      if (products.length === 0) {
-        fetchProducts();
-      }
-    }, [fetchProducts, products.length]);
+    };
+    fetchShippingFee();
+  }, []);
 
   // Handle form submission and initiate payment process via PayMongo API 
   async function handleCheckout(ev) {
@@ -76,11 +74,9 @@ export default function CartPage() {
       const randomString = Math.random().toString(36).substring(2, 10); // Random 8-character string
       return `${randomString}-zvie`;
     };
-  
     setIsProcessing(true);
     try {
       const response = await axios.post("/api/checkout", {
-        cartProducts,
         name,
         email,
         phone,
@@ -90,10 +86,9 @@ export default function CartPage() {
         postalCode,
         streetAddress,
         referenceNumber: referenceNumber(),
+        shippingFee,
       });
-  
       const { checkoutUrl } = response.data;
-  
       if (checkoutUrl) {
         console.log("Redirecting to checkout session:", checkoutUrl);
         // Redirect to PayMongo hosted checkout session
@@ -110,31 +105,48 @@ export default function CartPage() {
   }
   
 
-  // this is the function that will add the product to the cart
-  function moreProducts(id, e) {
-    e.preventDefault();
-    addProduct(id);
+// this is the function that will add the product to the cart
+const moreProducts = async (productId, quantity) => {
+  try {
+    const updatedQuantity = quantity + 1;
+    await UpdateQuantity(productId, updatedQuantity); // Update in context or database
+  } catch (error) {
+    console.error("Error adding product:", error);
   }
-  //  this is the function that will remove the product from the cart
-  function lessProducts(id, e) {
-    e.preventDefault();
-    const quantity = cartProducts.filter((productId) => productId === id).length;
-  
-    if (quantity >= 1) {
-      removeProduct(id);
-      if (quantity === 1) {
-        setProducts(prevProducts => prevProducts.filter(product => product._id !== id));
-      }
+};
+
+// this is the function that will remove the product from the cart
+const lessProducts = async (productId, quantity) => {
+  try {
+    const updatedQuantity = quantity - 1;
+    if (updatedQuantity > 0) {
+      await UpdateQuantity(productId, updatedQuantity); // Update in context or database
+    } else {
+      await removeProduct(productId);
     }
+  } catch (error) {
+    console.error("Error removing product:", error);
   }
+};
+
+// Clear the entire cart and delete it also in the database for the logged-in user
+const clearProducts = async () => {
+  try {
+    await clearCart();
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+  }
+};
 
   // Calculate total price
   function Total() {
-    return products.reduce((total, product) => {
-      const quantity = cartProducts.filter((id) => id === product._id).length;
-      return total + product.price * quantity;
+    const productTotal = cartProducts.reduce((total, product) => {
+      return total + product.productId.price * product.quantity;
     }, 0);
+  
+    return productTotal + shippingFee;
   }
+  
 
   const handlePhoneChange = (ev) => {
     const value = ev.target.value.replace(/\D/g, '');
@@ -149,9 +161,12 @@ export default function CartPage() {
   return (
     <Layout>
       <Center>
-        <div className="grid grid-cols-[1.2fr,.8fr] gap-[40px] mt-7">
+        <div className="grid grid-cols-1 md:grid-cols-[1.2fr,.8fr] gap-[40px] mt-7">
           <div className="bg-white shadow-lg rounded-lg py-4 px-6">
-            <h2 className="text-2xl font-semibold my-3 text-gray-800">Shopping Cart</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl sm:text-2xl font-semibold my-3 text-gray-800">Shopping Cart</h2>
+              <button onClick={clearProducts} className="md:w-32 w-20 h-10 flex items-center justify-center rounded-md text-sm font-medium text-white bg-red-500 hover:bg-red-600 border border-transparent hover:border-red-700 transition duration-200 ease-in-out">Clear Cart</button>
+            </div>
             {isLoading ? (
               <LoadingIndicator />
             ) : !cartProducts.length ? (
@@ -163,56 +178,56 @@ export default function CartPage() {
             ) : (
               <>
                 <div className="max-h-[340px] overflow-y-auto">
-                  <table className="w-full">
+                  <table className="w-full text-sm sm:text-base">
                     <thead className="sticky top-0 bg-white">
                       <tr className="border-b-2 border-gray-200">
-                        <th className="text-left p-4 text-gray-600">Products</th>
-                        <th className="text-center p-4 text-gray-600">Quantity</th>
-                        <th className="text-right p-4 text-gray-600">Price</th>
+                        <th className="text-left p-2 sm:p-4 text-gray-600">Products</th>
+                        <th className="text-center p-2 sm:p-4 text-gray-600">Quantity</th>
+                        <th className="text-right p-2 sm:p-4 text-gray-600">Price</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map(product => {
-                        const quantity = cartProducts.filter(id => id === product._id).length;
-                        if (quantity === 0) return null;
+                      {cartProducts.map(product => {
+                        const { productId, quantity } = product;
+
                         return (
                           <tr key={product._id} className="hover:bg-gray-50 transition-colors">
-                            <td className="p-4 border-b border-gray-100 flex items-center gap-4">
-                              {product.images?.length ? (
+                            <td className="p-2 sm:p-4 border-b border-gray-100 flex md:flex-row flex-col justify-start text-center items-center gap-2 md:gap-4">
+                              {productId.images?.length ? (
                                 <img
-                                  src={product.images[0].link}
-                                  alt={product.title}
-                                  className="w-[60px] h-[60px] object-cover rounded-lg shadow-sm"
+                                  src={productId.images[0].link}
+                                  alt={productId.title}
+                                  className="w-[40px] h-[40px] sm:w-[60px] sm:h-[60px] object-cover rounded-lg shadow-sm "
                                 />
                               ) : (
-                                <div className="w-[60px] h-[60px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                <div className="w-[40px] h-[40px] sm:w-[60px] sm:h-[60px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
                                   No image
                                 </div>
                               )}
-                              <span className="font-medium text-gray-800">{product.title}</span>
+                              <span className="font-medium text-gray-800 ">{productId.title}</span>
                             </td>
-                            <td className="text-center p-4 border-b border-gray-100">
-                              <div className="flex items-center justify-center gap-2">
+                            <td className="text-center p-2 sm:p-4 border-b border-gray-100">
+                              <div className="flex md:flex-row flex-col-reverse items-center justify-center gap-2">
                                 <button
-                                  onClick={e => lessProducts(product._id, e)}
-                                  className="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                  onClick={() => lessProducts (product.productId._id, quantity)}
+                                  className="w-6 h-6 sm:w-8 sm:h-8  flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full"
                                 >
                                   -
                                 </button>
                                 <span className="mx-2 font-medium">{quantity}</span>
                                 <button
-                                  onClick={e => moreProducts(product._id, e)}
-                                  className="w-8 h-8 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full"
+                                  onClick={() => moreProducts (product.productId._id, quantity)}
+                                  className="w-6 h-6 sm:w-8 sm:h-8  flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full"
                                 >
                                   +
                                 </button>
                               </div>
                             </td>
-                            <td className="text-right p-4 border-b border-gray-100 font-medium">
+                            <td className="text-right p-2 sm:p-4 border-b border-gray-100 font-medium">
                               {new Intl.NumberFormat("en-PH", {
                                 style: "currency",
                                 currency: "PHP",
-                              }).format(product.price)}
+                              }).format(productId.price)}
                             </td>
                           </tr>
                         );
@@ -222,8 +237,17 @@ export default function CartPage() {
                 </div>
                 <div className="border-t-2 border-gray-200">
                   <div className="flex justify-end font-semibold text-lg p-4">
-                    <span className="mr-4">Total:</span>
-                    <span className="text-blue-600">
+                    <span className="mr-4 text-sm sm:text-base">Shipping Fee:</span>
+                    <span className="text-blue-600 text-sm sm:text-base">
+                      {new Intl.NumberFormat("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      }).format(shippingFee)}
+                    </span>
+                  </div>
+                  <div className="flex justify-end font-semibold text-lg p-4">
+                    <span className="mr-4 text-sm sm:text-base">Total:</span>
+                    <span className="text-blue-600 text-sm sm:text-base">
                       {new Intl.NumberFormat("en-PH", {
                         style: "currency",
                         currency: "PHP",
@@ -256,8 +280,9 @@ export default function CartPage() {
                       type="email"
                       placeholder="Email Address"
                       value={email}
+                      disabled
                       onChange={ev => setEmail(ev.target.value)}
-                      className="border border-gray-300 rounded-md p-2 w-full focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                      className="border border-gray-300 disabled:cursor-not-allowed disabled:opacity-50 rounded-md p-2 w-full focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-2">

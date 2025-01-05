@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
-import Header from "@/components/Header";
 import { CartContext } from "@/components/CartContext";
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import Center from "@/components/Center";
+import Layout from "@/components/Layout";
 
 export default function SuccessPage() {
   const router = useRouter();
@@ -12,22 +12,28 @@ export default function SuccessPage() {
   const { reference } = router.query;
   const [orderDetails, setOrderDetails] = useState(null);
   useEffect(() => {
-    // Only fetch once when reference is available
     if (reference && !orderDetails) {
-      axios.get('/api/orders').then(response => {
-        const order = response.data.find(o => o.reference_number === reference);
-        setOrderDetails(order);
-      });
+      // Fetch the specific order based on the `reference_number`
+      axios
+        .get(`/api/orders?reference_number=${reference}`)
+        .then((response) => {
+          setOrderDetails(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching order:", error);
+        });
+
       clearCart();
     }
-  }, [reference]);
+  }, [reference, clearCart, orderDetails]);
+  
   return (
-    <>
+    <Layout>
       <Head>
         <title>Payment Successful | Teknokalakal</title>
         <meta name="description" content="Your payment has been processed successfully" />
       </Head>
-      <Header />
+
       <Center className="min-h-[87vh] bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full animate-fade-in">
           <div className="text-center">
@@ -43,7 +49,7 @@ export default function SuccessPage() {
                 <h2 className="font-semibold text-lg mb-2">Order Details</h2>
                 <p className="text-gray-600">Order Status: <span className="font-medium text-green-600 capitalize">{orderDetails.status}</span></p>
                 <p className="text-gray-600">Reference Number: <span className="font-mono">{reference}</span></p>
-                <p className="text-gray-600">Customer: {orderDetails.name}</p>
+                <p className="text-gray-600">Name: {orderDetails.name}</p>
                 <p className="text-gray-600">Email: {orderDetails.email}</p>
                 <p className="text-gray-600 font-semibold mt-2">Total Amount: ₱{(orderDetails.line_items.reduce((total, item) => total + item.quantity * item.amount, 0)/100).toFixed(2)}</p>
               </div>
@@ -68,6 +74,6 @@ export default function SuccessPage() {
           </div>
         </div>
       </Center>
-    </>
+    </Layout>
   );
 }

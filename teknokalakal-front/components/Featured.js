@@ -7,30 +7,48 @@ import { CartContext } from "./CartContext";
 export default function Featured({ product }) {
   const { addProduct } = useContext(CartContext);
 
+  // Check if the product is already featured in the database and update the featuredProductId
   function addFeaturedToCart() {
     addProduct(product._id);
   }
+  
 
   return (
-    <div className="bg-aqua-forest-600 rounded-md text-white mt-7 w-[800px] mx-auto py-5 px-5">
-      <Center style={{ padding: "0px" }}>
-        <div className="grid grid-cols-[1.2fr_0.8fr] gap-3 py-0 place-items-center">
-          <div className="flex flex-col justify-center gap-2">
-            <h1 className="font-normal text-6xl">{product.title}</h1>
-            <p className="text-gray-300 text-sm">{product.description}</p>
-            <div className="flex gap-2">
+    <div className="bg-aqua-forest-600 rounded-lg text-white md:mt-4 mt-2 mx-auto p-4 sm:p-6 shadow-lg max-w-[100%] lg:max-w-[1000px]">
+      <Center>
+        <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-4 sm:gap-6 items-center">
+          {/* Mobile Image */}
+          <div className="md:hidden flex justify-center mb-3">
+            <img
+              src={product.images?.[0]?.link || "/default-image.jpg"}
+              alt={product.title}
+              className="w-full max-w-auto sm:max-w-[440px] h-auto] sm:h-[240px] object-fill rounded-md shadow-md"
+            />
+          </div>
+
+          {/* Content Section */}
+          <div className="flex flex-col gap-2 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold leading-tight">
+              {product.title}
+            </h1>
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+              {product.description}
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center sm:justify-start gap-2 mt-3">
               <Link
-                href={"/products/" + product._id}
-                className="btn-primary group"
+                href={`/products/${product._id}`}
+                className="bg-white text-aqua-forest-700 font-medium py-2 px-4 rounded-md flex items-center justify-center gap-1 hover:bg-aqua-forest-700 hover:text-white transition-all duration-200 transform hover:scale-105 active:scale-95"
               >
-                View Products
+                View Product
                 <svg
-                  xmlns="(link unavailable)"
+                  xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="size-7 transition-transform group-hover:translate-x-1"
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
                 >
                   <path
                     strokeLinecap="round"
@@ -41,18 +59,20 @@ export default function Featured({ product }) {
               </Link>
               <button
                 onClick={addFeaturedToCart}
-                className="bg-aqua-forest-500 py-2 px-5 flex items-center hover:bg-aqua-forest-700 justify-center gap-2 rounded-md group"
+                className="bg-aqua-forest-500 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center gap-1 hover:bg-aqua-forest-700 transition-all duration-200 transform hover:scale-105 active:scale-95"
               >
                 Add to Cart
-                <CartIcon className="size-7 transition-transform group-hover:translate-x-1" />
+                <CartIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-center h-[200px] relative">
+
+          {/* Desktop Image */}
+          <div className="hidden md:flex justify-center items-center">
             <img
-              className=" max-w-full max-h-full object-cover rounded-md"
               src={product.images?.[0]?.link || "/default-image.jpg"}
               alt={product.title}
+              className="w-full max-w-[350px] h-auto  object-contain rounded-md shadow-lg"
             />
           </div>
         </div>
