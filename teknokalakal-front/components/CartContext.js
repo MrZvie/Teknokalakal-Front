@@ -1,56 +1,90 @@
 import { createContext, useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const CartContext = createContext({});
 
 export function CartContextProvider({ children }) {
-    const ls = typeof window !== "undefined" ? window.localStorage : null;
+  const [cartProducts, setCartProducts] = useState([]);
 
-    const [cartProducts, setCartProducts] = useState([]); 
+  // Function to fetch the cart from the server
+  async function fetchCart() {
+    try {
+      const response = await axios.get("/api/cart", { withCredentials: true });
+      // Ensure the response data is correctly used
+      setCartProducts(response.data.cart || []); 
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+    }
+  }
 
-    // Load cart from local storage when component mounts
-    useEffect(() => {
-        const savedCart = ls?.getItem('cart');
-        if (savedCart) {
-            setCartProducts(JSON.parse(savedCart)); // Parse the saved cart data from string to array of objects if it exists in local storage 
-        }
-    }, []);
+  useEffect(() => {
+    fetchCart(); // Fetch cart on initial load
+  }, []);
 
-    // Save cart to local storage whenever it changes
-    useEffect(() => {
-        if (cartProducts.length > 0) {
-            ls.setItem('cart', JSON.stringify(cartProducts));
-        } else {
-            ls.removeItem('cart'); // Clear local storage when cart is empty
-        }
-    }, [cartProducts]);
+  // Add product to the cart
+  async function addProduct(productId, quantity = 1) {
+    try {
+      console.log("Adding product:", productId);
+      // Send request to add the product
+      await axios.post("/api/cart/add", { productId, quantity }, { withCredentials: true });
+      // Re-fetch the cart after adding a product
+      await fetchCart(); 
+      toast.success("Product added to cart!");
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+    }
+  }
 
-    // Add product by ID and manage quantity + stock
-    function addProduct(productId) {
-        setCartProducts((prev) => [...prev, productId]); // Just store IDs
-      }
+  async function removeProduct(productId) {
+    try {
+      // Send request to remove the product
+      await axios.post("/api/cart/remove", { productId }, { withCredentials: true });
+      // Re-fetch the cart after removing a product
+      fetchCart();
+      toast.error("Product removed from cart!");
+    } catch (error) {
+      console.error("Error removing product from cart:", error);
+    }
+  }
 
-    // Remove one quantity or remove product if quantity is 1
-    function removeProduct(productId) {
-        setCartProducts((prev) => {
-          const index = prev.indexOf(productId);
-          if (index > -1) {
-            const newCart = [...prev];
-            newCart.splice(index, 1); // Remove one instance
-            return newCart;
-          }
-          return prev;
-        });
-      } 
-
-    // Clear the entire cart
-    function clearCart() {
-        setCartProducts([]);
+// Update product quantity (only used in the cart page)
+async function UpdateQuantity(productId, quantity) {
+  try {
+    if (quantity <= 0) {
+      await removeProduct(productId);
+      return;
     }
 
-    return (
-        <CartContext.Provider value={{ cartProducts, addProduct, removeProduct, clearCart }}>
-            {children}
-        </CartContext.Provider>
+    const response = await axios.put(
+      "/api/cart/updateQuantity",
+      { productId, quantity },
+      { withCredentials: true }
     );
+
+    await fetchCart();
+    return response.data;
+  } catch (error) {
+    console.error("Error updating product quantity:", error);
+  }
+}
+
+  // Clear the cart
+  async function clearCart() {
+    try {
+      // Send request to clear the cart
+      await axios.post("/api/cart/clear", {}, { withCredentials: true });
+       // Re-fetch the cart after clearing
+    setCartProducts([]); // Immediately update state to reflect cart deletion
+    toast.info("Cart cleared!");
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+    }
+  }
+
+  return (
+    <CartContext.Provider value={{ cartProducts, addProduct, removeProduct, UpdateQuantity, clearCart }}>
+      {children}
+    </CartContext.Provider>
+  );
 }

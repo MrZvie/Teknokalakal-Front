@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
-import Header from "@/components/Header";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Center from "@/components/Center";
 import LoadingIndicator from "@/components/LoadingIndicator";
+import Layout from "@/components/Layout";
 
 export default function CancelPage() {
   const router = useRouter();
@@ -39,11 +39,10 @@ export default function CancelPage() {
   }, [reference]);
 
   return (
-    <>
+    <Layout>
       <Head>
         <title>Order Cancelled | Teknokalakal</title>
       </Head>
-      <Header />
       <Center className="min-h-[87vh] bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
           <div className="text-center">
@@ -63,14 +62,15 @@ export default function CancelPage() {
             )}
             <p>Please restart your purchase.</p>
             <button
+              disabled={!orderDetails}
               onClick={() => router.push("/cart")}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+              className="bg-green-500 hover:bg-green-600 text-white font-semibold disabled:cursor-not-allowed disabled:opacity-50 py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
             >
               Start New Order
             </button>
           </div>
         </div>
       </Center>
-    </>
+    </Layout>
   );
 }
