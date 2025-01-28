@@ -42,7 +42,7 @@ export default function CreatePostForum({ onClose, onPostCreated }) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] md:w-1/3">
                 <h2 className="text-2xl font-bold mb-4">Create Post</h2>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <input

@@ -28,19 +28,20 @@ export default async function handler(req, res) {
   console.log("Received reference #", referenceNumber);
 
   try {
-   // Fetch the cart for the current user
-   const cart = await Cart.findOne({ userId: session.user.id }).populate("items.productId");
-   console.log("Cart items:", cart);
-   if (!cart || cart.items.length === 0) {
-     return res.status(400).json({ error: "Your cart is empty." });
-   }
+    // Fetch the cart for the current user
+    const cart = await Cart.findOne({ userId: session.user.id }).populate("items.productId");
+    console.log("Cart items:", cart);
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ error: "Your cart is empty." });
+    }
 
-   console.log("Products in the cart: ", cart.items);
+    console.log("Products in the cart: ", cart.items);
 
     // Create line items for the order
     const lineItems = cart.items.map((cartItem) => {
       const product = cartItem.productId;
       return {
+        productId: product._id, // Include productId
         amount: product.price * 100, // Convert to centavos (PHP)
         currency: "PHP",
         description: product.description || "No description available",
@@ -86,7 +87,14 @@ export default async function handler(req, res) {
       {
         data: {
           attributes: {
-            line_items: lineItems,
+            line_items: lineItems.map(item => ({
+              amount: item.amount,
+              currency: item.currency,
+              description: item.description,
+              images: item.images,
+              name: item.name,
+              quantity: item.quantity,
+            })),
             billing: {
               address: {
                 city: municipality,
@@ -105,14 +113,12 @@ export default async function handler(req, res) {
             payment_method_allowed: ["card", "gcash", "paymaya", "billease"],
             payment_method_options: {
               card: {
-                    request_three_d_secure: "any",
-                    installments: {
-                        enabled: true,
-                        terms: [
-                          3, 6, 12
-                        ]
-                    }
+                request_three_d_secure: "any",
+                installments: {
+                  enabled: true,
+                  terms: [3, 6, 12]
                 }
+              }
             },
             metadata: {
               orderId: orderDoc._id.toString(),
@@ -120,7 +126,7 @@ export default async function handler(req, res) {
             description: `Order #${referenceNumber} - Customer: ${name}`,
             success_url: `${process.env.NEXT_PUBLIC_URL}/success?reference=${referenceNumber}`,
             cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel?reference=${referenceNumber}`,
-            reference_number: referenceNumber,            
+            reference_number: referenceNumber,
             show_line_items: true,
             send_email_receipt: true,
           },
@@ -149,4 +155,3 @@ export default async function handler(req, res) {
     });
   }
 }
- // Use the `id` parameter to locate the order

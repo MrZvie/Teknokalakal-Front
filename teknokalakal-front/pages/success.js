@@ -65,7 +65,7 @@ export default function SuccessPage() {
                 Return to Home
               </button>
               <button 
-                onClick={() => router.push("/orders")}
+                onClick={() => router.push("/account")}
                 className="bg-white border-2 border-green-500 text-green-500 hover:bg-green-50 font-semibold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
               >
                 View Orders

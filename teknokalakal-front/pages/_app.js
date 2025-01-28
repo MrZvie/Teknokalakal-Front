@@ -6,8 +6,6 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import Layout from "@/components/Layout";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; 
 
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   const router = useRouter();
@@ -47,7 +45,6 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
         ) : (
           <>
           <Component {...pageProps} />
-          <ToastContainer />
         </>
         )}
       </CartContextProvider>

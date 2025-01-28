@@ -1,5 +1,6 @@
 import { mongooseConnect } from "@/lib/mongoose";
 import { Product } from "@/models/Products";
+import { Category } from "@/models/Category";
 
 export default async function handler(req, res) {
   const { method, query } = req;
@@ -11,7 +12,7 @@ export default async function handler(req, res) {
     try {
       if (query.id) {
         // Fetch a single product by ID
-        const product = await Product.findById(query.id);
+        const product = await Product.findById(query.id).populate('reviews.userId', 'name').populate('category', 'name').populate('parentCategory', 'name');
         if (!product) {
           return res.status(404).json({ success: false, message: "Product not found" });
         }
@@ -22,6 +23,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, data: products });
       }
     } catch (error) {
+      console.error("Error fetching product:", error);
       return res.status(500).json({ success: false, message: error.message });
     }
   } 

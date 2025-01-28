@@ -9,7 +9,7 @@ import LogOutIcon from "@/components/icons/LogOutIcon";
 import axios from "axios";
 import Modal from "@/components/Modal";
 import XIcon from "@/components/icons/XIcon";
-import { toast } from "react-toastify";
+import swal from "sweetalert2";
 import Link from "next/link";
 
 export default function AccountPage() {
@@ -71,7 +71,7 @@ export default function AccountPage() {
         setApplication(null); // No application yet
       }
     } catch (error) {
-      toast.error("Failed to fetch vendor data.");
+      swal.fire("Error!","Failed to fetch vendor data.",'error');
     }
   };
 
@@ -119,18 +119,18 @@ export default function AccountPage() {
       if (!res.ok) {
         const errorData = await res.json();
         console.error("Error:", errorData);
-        toast.error("Error saving profile: " + (errorData.message || "Unknown error."));
+        swal.fire("Error saving profile: " + (errorData.message || "Unknown error."),'error');
       } else {
         const { updatedUser } = await res.json();
         await updateSession({
           user: updatedUser,
         });
-        toast.success("Profile updated successfully!");
+        swal.fire("Success!!","Profile updated successfully!",'success');
         setIsEditing(false);
       }
     } catch (error) {
       console.error("Fetch error:", error);
-      toast.error("Error saving profile.");
+      swal.fire("Error saving profile.",'error');
     }
   };
 
@@ -155,10 +155,8 @@ export default function AccountPage() {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-PH", {
       year: "numeric",
-      month: "long",
+      month: "numeric",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
@@ -188,75 +186,155 @@ export default function AccountPage() {
               </Link>
             </div>
             {orders.length > 0 ? (
-              <div className="overflow-auto max-h-[425px] md:max-h-[450px]">
+              <div className="overflow-auto max-h-[425px] border-gray-800 border md:max-h-[450px]">
                 {/* Table Layout (for large screens) */}
                 <div className="hidden sm:block">
-                  <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-                    <thead>
-                      <tr className="text-left bg-gray-100">
-                        <th className="py-3 px-4 text-sm font-semibold text-gray-700">
-                          Order #
-                        </th>
-                        <th className="py-3 px-4 text-sm font-semibold text-gray-700">
-                          Status
-                        </th>
-                        <th className="py-3 px-4 text-sm font-semibold text-gray-700">
-                          Items
-                        </th>
-                        <th className="py-3 px-4 text-sm font-semibold text-gray-700">
-                          Date
-                        </th>
-                        <th className="py-3 px-4 text-sm font-semibold text-gray-700">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                  </table>
-
-                  <div className="overflow-y-auto h-[400px]">
-                    <table className="min-w-full bg-white">
+                  <div className="overflow-auto max-h-[450px]">
+                    <table className="min-w-full bg-white shadow-md rounded-lg">
+                      <thead className="sticky top-0 bg-gray-100">
+                        <tr className="text-left bg-gray-100">
+                          <th className="py-3 px-4 text-sm font-semibold text-gray-700">
+                            Order #
+                          </th>
+                          <th className="py-3 px-4 text-sm font-semibold text-gray-700">
+                            Payment Status
+                          </th>
+                          <th className="py-3 px-4 text-sm font-semibold text-gray-700">
+                            Shipping Status
+                          </th>
+                          <th className="py-3 px-4 text-sm font-semibold text-gray-700">
+                            Items
+                          </th>
+                          <th className="py-3 px-4 text-sm font-semibold text-gray-700">
+                            Date
+                          </th>
+                          <th className="py-3 px-4 text-sm font-semibold text-gray-700">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
                       <tbody>
-                        {orders.map((order) => {
-                          return (
-                            <tr
-                              key={order._id}
-                              className="border-b border-gray-200"
-                            >
-                              <td className="py-3 px-4 text-sm text-gray-800">
-                                {order.reference_number}
-                              </td>
-                              <td className="py-3 px-4 text-sm">
+                          {orders.map((order) => {
+                            return (
+                              <tr
+                                key={order._id}
+                                className="border-b border-gray-200"
+                              >
+                                <td className="py-3 px-4 text-sm text-gray-800">
+                                  {order.reference_number}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <span
+                                    className={`${
+                                      order.status === "paid"
+                                        ? "text-green-500"
+                                        : order.status === "pending"
+                                        ? "text-yellow-500"
+                                        : "text-red-500"
+                                    }`}
+                                  >
+                                    {order.status}
+                                  </span>
+                                </td>
+                                <td>
                                 <span
-                                  className={`${
-                                    order.status === "paid"
-                                      ? "text-green-500"
-                                      : order.status === "pending"
-                                      ? "text-yellow-500"
-                                      : "text-red-500"
-                                  }`}
-                                >
-                                  {order.status}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-sm text-gray-700">
-                                {order.line_items.length}
-                              </td>
-                              <td className="py-3 px-4 text-sm text-gray-700">
-                                {formatDate(order.createdAt)}
-                              </td>
-                              <td className="py-3 px-4 text-sm">
-                                <button
-                                  className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-[12px]"
-                                  onClick={() => handleViewDetails(order)}
-                                >
-                                  View Details
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
+                                    className={`${
+                                      order.shipping_statuss === "delivered"
+                                        ? "text-green-500"
+                                        : order.shipping_statuss === "pending"
+                                        ? "text-yellow-500"
+                                        : order.shipping_statuss === "awaiting_courier"
+                                        ? "text-purple-400"
+                                        : order.shipping_statuss === "shipped"
+                                        ? "text-blue-500"
+                                        : "text-red-500"
+                                    }`}
+                                  >
+                                    {order.shipping_statuss}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-700">
+                                  {order.line_items.length}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-700">
+                                  {formatDate(order.createdAt)}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <button
+                                    className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-[12px]"
+                                    onClick={() => handleViewDetails(order)}
+                                  >
+                                    View Details
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                  
                     </table>
+                    {/* <div className="overflow-y-auto h-[400px]">
+                      <table className="min-w-full bg-white">
+                        <tbody>
+                          {orders.map((order) => {
+                            return (
+                              <tr
+                                key={order._id}
+                                className="border-b border-gray-200"
+                              >
+                                <td className="py-3 px-4 text-sm text-gray-800">
+                                  {order.reference_number}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <span
+                                    className={`${
+                                      order.status === "paid"
+                                        ? "text-green-500"
+                                        : order.status === "pending"
+                                        ? "text-yellow-500"
+                                        : "text-red-500"
+                                    }`}
+                                  >
+                                    {order.status}
+                                  </span>
+                                </td>
+                                <td>
+                                <span
+                                    className={`${
+                                      order.shipping_statuss === "delivered"
+                                        ? "text-green-500"
+                                        : order.shipping_statuss === "pending"
+                                        ? "text-yellow-500"
+                                        : order.shipping_statuss === "awaiting_courier"
+                                        ? "text-purple-400"
+                                        : order.shipping_statuss === "shipped"
+                                        ? "text-blue-500"
+                                        : "text-red-500"
+                                    }`}
+                                  >
+                                    {order.shipping_statuss}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-700">
+                                  {order.line_items.length}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-700">
+                                  {formatDate(order.createdAt)}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <button
+                                    className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-[12px]"
+                                    onClick={() => handleViewDetails(order)}
+                                  >
+                                    View Details
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div> */}
                   </div>
                 </div>
 
@@ -345,18 +423,6 @@ export default function AccountPage() {
                       0
                     ) / 100
                   ).toFixed(2)}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Shipping Fee:</strong>{" "}
-                  {selectedOrder.line_items.find(
-                    (item) => item.name === "Shipping Fee"
-                  )
-                    ? `₱${(
-                        selectedOrder.line_items.find(
-                          (item) => item.name === "Shipping Fee"
-                        ).amount / 100
-                      ).toFixed(2)}`
-                    : "Not available"}
                 </p>
 
                 <h3 className="text-xl font-semibold mt-6 mb-2">Order Items</h3>

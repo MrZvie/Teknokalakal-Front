@@ -77,21 +77,36 @@ function VendorProductsPage({ swal }) {
     <Layout>
       <Center>
         <div className="flex flex-col gap-6 mt-2">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800">My Products</h1>
-            <Link
-              href={deleting || loading ? "#" : "/vendor/products/new"}
-              onClick={(e) => {
-                if (deleting || loading) {
-                  e.preventDefault();
-                }
-              }}
-              className={`bg-blue-500 hover:bg-blue-600 sm:text-sm md:text-xl text-[12px] sm:px-2 text-white py-2 px-4 rounded-md shadow-md font-medium ${
-                deleting || loading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              Add New Product
-            </Link>
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <Link
+                href={deleting || loading ? "#" : "/vendor"}
+                onClick={(e) => {
+                  if (deleting || loading) {
+                    e.preventDefault();
+                  }
+                }}
+                className={`bg-blue-500 hover:bg-blue-600 sm:text-sm md:text-xl text-[12px] sm:px-2 text-white py-2 px-4 rounded-md shadow-md font-medium ${
+                  deleting || loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                View Statistics
+              </Link>
+              <Link
+                href={deleting || loading ? "#" : "/vendor/products/new"}
+                onClick={(e) => {
+                  if (deleting || loading) {
+                    e.preventDefault();
+                  }
+                }}
+                className={`bg-blue-500 hover:bg-blue-600 sm:text-sm md:text-xl text-[12px] sm:px-2 text-white py-2 px-4 rounded-md shadow-md font-medium ${
+                  deleting || loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                Add New Product
+              </Link>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <input
@@ -112,9 +127,9 @@ function VendorProductsPage({ swal }) {
                 filteredProducts.map((product) => (
                   <div
                     key={product._id}
-                    className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 hover:shadow-xl transition"
+                    className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 hover:shadow-xl transition flex flex-col justify-between"
                   >
-                    <div className="mb-4">
+                    <div className="mb-4 flex-grow">
                       <h2 className="text-lg font-semibold text-gray-800 truncate">{product.title}</h2>
                       <p className="text-gray-600 text-sm mb-2 line-clamp-2">
                         {product.description}
@@ -122,7 +137,7 @@ function VendorProductsPage({ swal }) {
                       <p className="text-gray-800 font-medium">Price: {formatPrice(product.price)}</p>
                       <p className="text-gray-500 text-sm">Stock: {product.stock}</p>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-end gap-2 items-center">
                       <Link href={"/vendor/products/edit/" + product._id}>
                         <button className="bg-green-500 hover:bg-green-600 text-white py-1 px-4 rounded-md font-medium">
                           Edit
@@ -139,7 +154,7 @@ function VendorProductsPage({ swal }) {
                 ))
               ) : (
                 <p className="text-gray-500 text-center col-span-full">
-                  No products match your search.
+                  No products found.
                 </p>
               )}
             </div>

@@ -15,6 +15,7 @@ export default function ProductForm({
   images: existingImages,
   category: assignedCategory,
   properties: assignedProperties,
+  videoLink: existingVideoLink,
 }) {
   const [title, setTitle] = useState(existingTitle || "");
   const [description, setDescription] = useState(existingDescription || "");
@@ -28,6 +29,7 @@ export default function ProductForm({
   const [uploadedImages, setUploadedImages] = useState(existingImages || []);
   const [categories, setCategories] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [videoLink, setVideoLink] = useState(existingVideoLink || '');
   const router = useRouter();
 
   useEffect(() => {
@@ -88,6 +90,7 @@ export default function ProductForm({
       parentCategory, // Include the parentCategory in the save data
       properties: productProperties,
       imagesToDelete,
+      videoLink,
     };
 
   
@@ -278,7 +281,7 @@ export default function ProductForm({
         <label className="block text-sm font-medium text-green-900">
           Photos
         </label>
-        <div className="flex flex-wrap gap-4 ">
+        <div className="flex flex-wrap items-center md:items-start justify-center md:justify-start gap-4 ">
           {uploadedImages.map((image) => (
             <div key={image.id} className="relative">
               <img
@@ -299,7 +302,6 @@ export default function ProductForm({
             signatureEndpoint="/api/sign-cloudinary-params"
             options={{
               sources: ["local", "google_drive"],
-              maxFiles: 4,
               folder: "productsVendor",
             }}
             onSuccess={(result) => handleImageUpload(result.info)}
@@ -315,6 +317,19 @@ export default function ProductForm({
             )}
           </CldUploadWidget>
         </div>
+      </div>
+
+      <div className="mb-3">
+        <label className="block text-sm font-medium text-green-900">
+          Link tutorial video
+        </label>
+        <input
+          type="text"
+          value={videoLink}
+          placeholder="Paste video URL"
+          onChange={(ev) => setVideoLink(ev.target.value)}
+          className="w-full p-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+        />
       </div>
 
       <div className="mb-3">
