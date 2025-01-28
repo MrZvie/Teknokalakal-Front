@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import swal from "sweetalert2";
 
 export const CartContext = createContext({});
 
@@ -29,10 +29,13 @@ export function CartContextProvider({ children }) {
       // Send request to add the product
       await axios.post("/api/cart/add", { productId, quantity }, { withCredentials: true });
       // Re-fetch the cart after adding a product
-      await fetchCart(); 
-      toast.success("Product added to cart!");
+      await fetchCart();
+      // Show success notification
+      swal.fire("Success!", "Product added to cart.", "success");
     } catch (error) {
       console.error("Error adding product to cart:", error);
+      // Show error notification
+      swal.fire("Error!", "There was an issue adding the product to the cart.", "error");
     }
   }
 

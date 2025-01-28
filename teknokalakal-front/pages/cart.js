@@ -7,6 +7,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import Layout from "@/components/Layout";
 import { useSession } from "next-auth/react";
+import swal from "sweetalert2";
 
 export default function CartPage() {
   const router = useRouter();
@@ -133,6 +134,7 @@ const lessProducts = async (productId, quantity) => {
 const clearProducts = async () => {
   try {
     await clearCart();
+    swal.fire('','Products in the cart has been cleared','success');
   } catch (error) {
     console.error("Error clearing cart:", error);
   }

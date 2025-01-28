@@ -41,7 +41,7 @@ export default async function handle(req, res) {
   }
 
   if (method === "POST") {
-    const { title, description, price, stock, images, category, parentCategory, properties, imagesToDelete } = req.body;
+    const { title, description, price, stock, images, category, parentCategory, properties, imagesToDelete, videoLink } = req.body;
     const productDoc = await Product.create({
       title,
       description,
@@ -51,6 +51,7 @@ export default async function handle(req, res) {
       category: category || null,
       parentCategory: parentCategory || null,
       properties,
+      videoLink: videoLink || null,
       vendorId: session.user.id, // Save the logged-in user's ID as creator
     });
     if (imagesToDelete?.length > 0) {
@@ -60,7 +61,7 @@ export default async function handle(req, res) {
   }
 
   if (method === "PUT") {
-    const { title, description, price, stock, images, category, parentCategory, properties, _id, imagesToDelete } = req.body;
+    const { title, description, price, stock, images, category, parentCategory, properties, _id, imagesToDelete, videoLink } = req.body;
     
     const product = await Product.findById(_id);
     if (!product) {
@@ -96,6 +97,7 @@ export default async function handle(req, res) {
         category: category || null,
         parentCategory: parentCategory || null,
         properties,
+        videoLink: videoLink || null,
       }
     );
     res.json(true);

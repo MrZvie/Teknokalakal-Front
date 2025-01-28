@@ -29,7 +29,7 @@ export default function EditProductPage() {
     return (
         <Layout>
             <Center>
-                <h1 className="text-3xl flex-start font-bold text-gray-800 mb-0">Edit Product</h1>
+                <h1 className="text-lg md:text-3xl flex-start font-bold text-gray-800 mb-0">Edit Product</h1>
                 {loading ? (
                     <LoadingIndicator />
                 ) : (

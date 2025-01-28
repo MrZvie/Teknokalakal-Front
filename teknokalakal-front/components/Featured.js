@@ -1,28 +1,26 @@
 import Link from "next/link";
-import Center from "./Center";
-import CartIcon from "./icons/CartIcon";
 import { useContext } from "react";
 import { CartContext } from "./CartContext";
+import Center from "./Center";
+import CartIcon from "./icons/CartIcon";
 
 export default function Featured({ product }) {
   const { addProduct } = useContext(CartContext);
 
-  // Check if the product is already featured in the database and update the featuredProductId
   function addFeaturedToCart() {
     addProduct(product._id);
   }
-  
 
   return (
-    <div className="bg-aqua-forest-600 rounded-lg text-white md:mt-4 mt-2 mx-auto p-4 sm:p-6 shadow-lg max-w-[100%] lg:max-w-[1000px]">
-      <Center>
+    <Center>
+      <div className="bg-aqua-forest-600 rounded-lg text-white md:mt-4 mt-2 mx-auto p-4 sm:p-6 shadow-lg max-w-[100%]">
         <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-4 sm:gap-6 items-center">
           {/* Mobile Image */}
           <div className="md:hidden flex justify-center mb-3">
             <img
               src={product.images?.[0]?.link || "/default-image.jpg"}
               alt={product.title}
-              className="w-full max-w-auto sm:max-w-[440px] h-auto] sm:h-[240px] object-fill rounded-md shadow-md"
+              className="w-full max-w-auto sm:max-w-[440px] h-auto sm:h-[240px] object-fill rounded-md shadow-md"
             />
           </div>
 
@@ -68,15 +66,15 @@ export default function Featured({ product }) {
           </div>
 
           {/* Desktop Image */}
-          <div className="hidden md:flex justify-center items-center">
+          <div className="hidden md:flex justify-center">
             <img
               src={product.images?.[0]?.link || "/default-image.jpg"}
               alt={product.title}
-              className="w-full max-w-[350px] h-auto  object-contain rounded-md shadow-lg"
+              className="w-full max-w-[440px] h-auto sm:h-[240px] object-fill rounded-md shadow-md"
             />
           </div>
         </div>
-      </Center>
-    </div>
+      </div>
+    </Center>
   );
 }

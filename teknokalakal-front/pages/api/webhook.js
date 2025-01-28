@@ -1,11 +1,12 @@
-import { Order } from '@/models/Order';
 import { mongooseConnect } from "@/lib/mongoose";
+import { Order } from "@/models/Order";
+import { Product } from "@/models/Products";
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       await mongooseConnect();
-      
+
       const { data } = req.body;
       console.log("Received data:", data);
       const event = data.attributes;
@@ -16,10 +17,21 @@ export default async function handler(req, res) {
       if (orderId) {
         switch(event.type) {
           case 'payment.paid':
-            await Order.findByIdAndUpdate(orderId, { 
+            const order = await Order.findByIdAndUpdate(orderId, { 
               status: 'paid',
               statusDescription: 'Payment successfully processed'
             });
+
+            if (order) {
+              // Increment soldCount for each product in the order
+              for (const item of order.line_items) {
+                if (item.productId) {
+                  await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { sold: item.quantity }
+                  });
+                }
+              }
+            }
             break;
           
           case 'payment.failed':
@@ -78,9 +90,9 @@ export default async function handler(req, res) {
       res.status(200).json({ received: true });
     } catch (error) {
       console.error('Webhook error:', error);
-      res.status(200).json({ received: true });
+      res.status(500).json({ error: "Webhook handling failed" });
     }
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ error: "Method not allowed" });
   }
 }
