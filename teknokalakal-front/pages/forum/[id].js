@@ -4,8 +4,7 @@ import axios from "axios";
 import Layout from "@/components/Layout";
 import { useSession } from "next-auth/react";
 import LoadingIndicator from "@/components/LoadingIndicator";
-import { toast } from "react-toastify"; 
-import Swal from "sweetalert2";
+import swal from "sweetalert2";
 
 
 export default function PostPage() {
@@ -35,7 +34,7 @@ export default function PostPage() {
   const handleAddComment = async () => {
     if (!comment.trim()) {
       // Show toast notification for empty comment
-      toast.error("Please enter a comment before submitting!");
+      swal.fire("","Please enter a comment before submitting!","error");
       return;
     }
     try {
@@ -45,7 +44,7 @@ export default function PostPage() {
       fetchPost(); // Refresh post data
     } catch (err) {
       console.error("Failed to add comment:", err);
-      toast.error("Failed to add comment. Please try again!");  // Error toast
+      swal.fire("","Failed to add comment. Please try again!","error");
     }
   };
 
@@ -60,7 +59,7 @@ export default function PostPage() {
 
     // Function to handle comment deletion
     const handleDeleteComment = async (commentId) => {
-        const result = await Swal.fire({
+        const result = await swal.fire({
           title: "Are you sure?",
           text: "This comment will be deleted.",
           icon: "warning",
@@ -74,11 +73,11 @@ export default function PostPage() {
         if (result.isConfirmed) {
           try {
             await axios.delete(`/api/forum/${id}/comments`, { data: { commentId } });
-            toast.success("Comment deleted successfully");
+            swal.fire("","Comment deleted successfully","success");
             fetchPost(); // Refresh the post data
           } catch (err) {
             console.error("Failed to delete comment:", err);
-            toast.error("Failed to delete comment. Please try again!");
+            swal.fire("","Failed to delete comment. Please try again!","error");
           }
         }
       };

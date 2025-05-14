@@ -7,16 +7,12 @@ import Center from "@/components/Center";
 import EditIcon from "@/components/icons/EditIcon";
 import LogOutIcon from "@/components/icons/LogOutIcon";
 import axios from "axios";
-import Modal from "@/components/Modal";
-import XIcon from "@/components/icons/XIcon";
 import swal from "sweetalert2";
 import Link from "next/link";
 
 export default function AccountPage() {
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -64,7 +60,7 @@ export default function AccountPage() {
     }
 
     try {
-      const applicationRes = await axios.get(`/api/vendor?vendorId=${session.user.id}`);
+      const applicationRes = await axios.get(`/api/vendor?userId=${session.user.id}`);
       if (applicationRes.data.length > 0) {
         setApplication(applicationRes.data[0]); // Assuming one application per user
       } else {
@@ -142,16 +138,6 @@ export default function AccountPage() {
     return null;
   }
 
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedOrder(null);
-    setIsModalOpen(false);
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-PH", {
       year: "numeric",
@@ -161,6 +147,98 @@ export default function AccountPage() {
   };
 
   const { user } = session;
+
+  const handleRefundRequest = async (orderId) => {
+    const result = await swal.fire({
+      title: "Are you sure?",
+      text: "Do you really want to request a refund for this order?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, request refund!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await axios.post(`/api/orders/${orderId}/refund`);
+        swal.fire("", "Refund request submitted successfully!", "success");
+      } catch (error) {
+        console.error("Error requesting refund:", error);
+        swal.fire("", "Failed to request refund.", "error");
+      }
+    }
+  };
+
+  const calculateTotalAmount = (order) => {
+    return order.line_items.reduce((sum, item) => sum + item.amount * item.quantity, 0);
+  };
+
+  const handleViewDetails = (order) => {
+    swal.fire({
+      title: `<h2 class="text-lg font-semibold text-gray-800">Order Details</h2>`,
+      html: `
+        <div class="text-left max-w-3xl mx-auto p-4 border border-gray-300 overflow-hidden bg-white rounded-lg shadow-lg">
+          <p class="text-gray-700"><strong>Reference Number:</strong> ${order.reference_number}</p>
+          <p class="text-gray-700"><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
+          <p class="text-gray-700"><strong>Status:</strong> ${order.status}</p>
+          <p class="text-gray-700"><strong>Total:</strong> ${new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+          }).format(calculateTotalAmount(order) / 100)}
+          </p>
+  
+          <h3 class="text-sm font-semibold mt-4 mb-2 text-gray-700">Order Items</h3>
+          
+          <div class="overflow-x-auto max-h-[85px]">
+            <table class="w-full table-auto text-sm">
+              <thead>
+                <tr class="bg-gray-100 text-xs md:text-base border-b">
+                  <th class="px-2 py-2 text-left text-gray-700">Name</th>
+                  <th class="px-2 py-2 text-left text-gray-700">Quantity</th>
+                  <th class="px-2 py-2 text-left text-gray-700">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                  ${order.line_items
+                    .map(
+                      (item) => `
+                    <tr class="border-b">
+                      <td class="px-2 py-1 text-gray-800">${item.name}</td>
+                      <td class="px-2 py-1 text-gray-800">${item.quantity}</td>
+                      <td class="px-2 py-1 text-gray-800">${new Intl.NumberFormat("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        }).format(item.amount / 100)}</td>
+                    </tr>
+                  `
+                    )
+                    .join("")}
+              </tbody>
+            </table>
+          </div>
+          ${
+            order.status === "paid"
+              ? `<button id="refund-request-btn" class="bg-red-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-red-600 transition duration-300 w-full">Request Refund</button>`
+              : ""
+          }
+        </div>
+      `,
+      showConfirmButton: false,
+      showCloseButton: true,
+      width: "auto",
+      customClass: {
+        popup: "rounded-lg shadow-lg max-w-3xl",
+      },
+      didOpen: () => {
+        if (order.status === "paid") {
+          document
+            .getElementById("refund-request-btn")
+            .addEventListener("click", () => handleRefundRequest(order._id));
+        }
+      },
+    });
+  };
 
   return (
     <Layout>
@@ -186,7 +264,7 @@ export default function AccountPage() {
               </Link>
             </div>
             {orders.length > 0 ? (
-              <div className="overflow-auto max-h-[425px] border-gray-800 border md:max-h-[450px]">
+              <div className="overflow-auto max-h-[425px] md:max-h-[450px]">
                 {/* Table Layout (for large screens) */}
                 <div className="hidden sm:block">
                   <div className="overflow-auto max-h-[450px]">
@@ -237,13 +315,14 @@ export default function AccountPage() {
                                   </span>
                                 </td>
                                 <td>
-                                <span
+                                  <span
                                     className={`${
                                       order.shipping_statuss === "delivered"
                                         ? "text-green-500"
                                         : order.shipping_statuss === "pending"
                                         ? "text-yellow-500"
-                                        : order.shipping_statuss === "awaiting_courier"
+                                        : order.shipping_statuss ===
+                                          "awaiting_courier"
                                         ? "text-purple-400"
                                         : order.shipping_statuss === "shipped"
                                         ? "text-blue-500"
@@ -273,68 +352,6 @@ export default function AccountPage() {
                         </tbody>
                   
                     </table>
-                    {/* <div className="overflow-y-auto h-[400px]">
-                      <table className="min-w-full bg-white">
-                        <tbody>
-                          {orders.map((order) => {
-                            return (
-                              <tr
-                                key={order._id}
-                                className="border-b border-gray-200"
-                              >
-                                <td className="py-3 px-4 text-sm text-gray-800">
-                                  {order.reference_number}
-                                </td>
-                                <td className="py-3 px-4 text-sm">
-                                  <span
-                                    className={`${
-                                      order.status === "paid"
-                                        ? "text-green-500"
-                                        : order.status === "pending"
-                                        ? "text-yellow-500"
-                                        : "text-red-500"
-                                    }`}
-                                  >
-                                    {order.status}
-                                  </span>
-                                </td>
-                                <td>
-                                <span
-                                    className={`${
-                                      order.shipping_statuss === "delivered"
-                                        ? "text-green-500"
-                                        : order.shipping_statuss === "pending"
-                                        ? "text-yellow-500"
-                                        : order.shipping_statuss === "awaiting_courier"
-                                        ? "text-purple-400"
-                                        : order.shipping_statuss === "shipped"
-                                        ? "text-blue-500"
-                                        : "text-red-500"
-                                    }`}
-                                  >
-                                    {order.shipping_statuss}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-700">
-                                  {order.line_items.length}
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-700">
-                                  {formatDate(order.createdAt)}
-                                </td>
-                                <td className="py-3 px-4 text-sm">
-                                  <button
-                                    className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-[12px]"
-                                    onClick={() => handleViewDetails(order)}
-                                  >
-                                    View Details
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div> */}
                   </div>
                 </div>
 
@@ -370,7 +387,7 @@ export default function AccountPage() {
                           Date: {formatDate(order.createdAt)}
                         </p>
 
-                        <div className="mt-2">
+                        <div className="mt-2 flex gap-2 justify-center">
                           <button
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-sm"
                             onClick={() => handleViewDetails(order)}
@@ -387,88 +404,6 @@ export default function AccountPage() {
               <p className="text-gray-600">No orders found.</p>
             )}
           </div>
-
-          {/* Modal for Order Details */}
-          {isModalOpen && selectedOrder && (
-            <Modal onClose={handleCloseModal}>
-              <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg relative">
-                {/* Close button */}
-                <button
-                  onClick={handleCloseModal}
-                  className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
-                  aria-label="Close Modal"
-                >
-                  <XIcon />
-                </button>
-
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                  Order Details
-                </h2>
-
-                <p className="text-gray-700">
-                  <strong>Reference Number:</strong>{" "}
-                  {selectedOrder.reference_number}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Date:</strong> {formatDate(selectedOrder.createdAt)}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Status:</strong> {selectedOrder.status}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Total:</strong> ₱
-                  {(
-                    selectedOrder.line_items.reduce(
-                      (total, item) => total + item.amount * item.quantity,
-                      0
-                    ) / 100
-                  ).toFixed(2)}
-                </p>
-
-                <h3 className="text-xl font-semibold mt-6 mb-2">Order Items</h3>
-
-                {/* Scrollable Order Items Table */}
-                <div className="border space-y-2 border-gray-300 rounded-lg overflow-x-auto">
-                  <div className="border-b-2 border-gray-400">
-                    <table className="min-w-full table-auto divide-y divide-gray-200">
-                      <thead>
-                        <tr classNmae=" border-b-3 border-gray-200">
-                          <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                            Name
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                            Quantity
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                            Price
-                          </th>
-                        </tr>
-                      </thead>
-                    </table>
-                  </div>
-                  <div className="max-h-[80px] overflow-y-auto">
-                    <table className="min-w-full table-auto divide-y divide-gray-200">
-                      <tbody>
-                        {selectedOrder.line_items.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="px-4 py-2 text-sm text-gray-800">
-                              {item.name}
-                            </td>
-                            <td className="px-4 py-2 text-sm text-gray-800">
-                              {item.quantity}
-                            </td>
-                            <td className="px-4 py-2 text-sm text-gray-800">
-                              ₱{(item.amount / 100).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </Modal>
-          )}
 
           {/* Right Column: Account Information */}
           <div className="md:col-span-1 md:order-2 order-1 max-w-xl mx-auto space-y-2">

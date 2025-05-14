@@ -356,6 +356,19 @@ const clearProducts = async () => {
                   {isProcessing ? "Processing..." : "Continue to Payment"}
                 </button>
               </form>
+              
+              <div>
+                <p className="text-sm text-gray-500 mt-4">
+                  By clicking "Continue to Payment", you agree to our{" "}
+                  <a href="/terms" className="text-blue-600 hover:underline">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" className="text-blue-600 hover:underline">
+                    Privacy Policy
+                  </a>.
+                </p>
+              </div>
             </div>
           )}
         </div>

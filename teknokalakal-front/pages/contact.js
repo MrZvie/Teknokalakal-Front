@@ -17,7 +17,7 @@ export default function ContactPage() {
                                 </p>
                                 <a
                                     href="mailto:benedicto.angelito.a@gmail.com"
-                                    className="block mt-4 text-sm md:text-base text-center text-blue-500 font-medium hover:text-blue-600"
+                                    className="block mt-4 text-sm md:text-base  text-blue-500 font-medium hover:text-blue-600"
                                 >
                                     benedicto.angelito.a@gmail.com
                                 </a>

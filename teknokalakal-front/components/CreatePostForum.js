@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { toast } from "react-toastify";
+import swal from "sweetalert2";
 
 export default function CreatePostForum({ onClose, onPostCreated }) {
     const [title, setTitle] = useState("");
@@ -13,12 +13,12 @@ export default function CreatePostForum({ onClose, onPostCreated }) {
     const handleCreatePost = async () => {
         setError(null); // Reset error state
         if (!title.trim() || !content.trim()) {
-            toast.warning("Both title and content are required.");
+            swal.fire("Warning!!","Both title and content are required.","warning");
             return;
         }
 
         if (!session?.user?.id) {
-            toast.warning("You need to be logged in to create a post.");
+            swal.fire("Warning!!","You need to be logged in to create a post.","warning");
             return;
         }
 
@@ -31,10 +31,10 @@ export default function CreatePostForum({ onClose, onPostCreated }) {
             });
             onPostCreated(data.post, data.post.userId.name); // Notify parent about the new post
             onClose(); // Close modal
-            toast.success("Post created successfully!");
+            swal.fire("Success!","Post created successfully!","success");
         } catch (err) {
             console.error(err);
-            toast.error(err.response?.data?.error || "Failed to create post.");
+            swal.fire("",err.response?.data?.error || "Failed to create post.","error");
         } finally {
             setLoading(false);
         }

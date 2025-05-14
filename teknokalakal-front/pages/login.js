@@ -1,14 +1,28 @@
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import EyeIcon from "@/components/icons/EyeIcons";
+import EyeSlashIcon from "@/components/icons/EyeSlashIcon";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import swal from "sweetalert2";
 
 export default function LoginPage() {
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between login and sign-up modes
+  const { status } = useSession(); 
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
+  const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     username: "",
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const toggleForm = () => {
     setIsSignUp((prev) => !prev);
@@ -31,48 +45,44 @@ export default function LoginPage() {
       password,
     });
 
-    if (result.error) {
-      alert("Login failed: " + result.error);
-    } else {
-      // Redirect to home or dashboard
-      window.location.href = "/";
+    if (result?.error) {
+      swal.fire("Login failed", result.error, "error");
+    } else if (result?.ok && result?.status === 200) {
+      // Session should auto-redirect from useEffect
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { name, username, email, password } = formData;
 
     if (isSignUp) {
-      // If it's a sign-up, send the data to the signup API
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, username }),
+        body: JSON.stringify({ name, username, email, password }),
       });
 
       const data = await res.json();
+
       if (res.ok) {
-        alert(data.message);
-        setIsSignUp(false); // Switch to login form after successful sign-up
-        resetForm(); // Reset the form fields after sign-up
+        swal.fire("Success", data.message, "success");
+        setIsSignUp(false);
+        resetForm();
       } else {
-        alert(data.message || "Sign-up failed!");
+        swal.fire("Sign-up failed", data.message || "Something went wrong", "error");
       }
     } else {
-      // If it's a login, call handleSignIn
-      handleSignIn(email, password);
+      await handleSignIn(email, password);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   return (
     <div className="bg-aqua-forest-600 w-screen h-screen flex items-center">
@@ -81,60 +91,58 @@ export default function LoginPage() {
           {isSignUp ? "Sign Up" : "Sign In"}
         </h1>
         <p className="text-gray-600">
-          {isSignUp
-            ? "Create an account to continue."
-            : "Sign in to your account."}
+          {isSignUp ? "Create an account to continue." : "Sign in to your account."}
         </p>
 
-        {/* Form */}
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           {isSignUp && (
             <>
-              <div>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Your Name"
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required={isSignUp}
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Username"
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                value={formData.username}
+                onChange={handleInputChange}
+                required
+              />
             </>
           )}
-          <div>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            className="w-full p-2 border border-gray-300 rounded-md"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+          />
+          <div className="relative">
             <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              className="w-full p-2 border border-gray-300 rounded-md"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-2 border border-gray-300 rounded-md pr-10"
               value={formData.password}
               onChange={handleInputChange}
               required
             />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+            </button>
           </div>
           <button
             type="submit"
@@ -144,7 +152,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Toggle Link */}
         <p className="mt-4 text-sm">
           {isSignUp ? "Already have an account?" : "Don’t have an account yet?"}{" "}
           <span

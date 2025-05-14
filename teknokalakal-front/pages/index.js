@@ -58,7 +58,7 @@ export default function HomePage({ newProducts }) {
 export async function getServerSideProps() {
   await mongooseConnect();
   // Fetch new products from the database
-  const newProducts = await Product.find().sort({ createdAt: -1 }).limit(10).lean();
+  const newProducts = await Product.find().sort({ createdAt: -1 }).limit(16).lean();
   return {
     props: {
       newProducts: JSON.parse(JSON.stringify(newProducts)),

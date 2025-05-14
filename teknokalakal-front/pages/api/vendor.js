@@ -26,14 +26,14 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const { vendorId } = req.query;
+      const { userId } = req.query;
 
-      if (!vendorId) {
-        return res.status(400).json({ message: "Vendor ID is required." });
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required." });
       }
 
       // Fetch applications for the vendor
-      const application = await Vendor.find({ vendorId }).sort({ registrationDate: -1 });
+      const application = await Vendor.find({ userId }).sort({ registrationDate: -1 });
 
       if (application.length === 0) {
         // No applications found, but we send a user-friendly message
@@ -46,10 +46,10 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "POST") {
     try {
-      const { vendorId, name, description, address, phone, email, certifications } = req.body;
+      const { userId, name, description, address, phone, email, certifications } = req.body;
 
       const vendor = new Vendor({
-        vendorId,
+        userId,
         businessInfo: { name, description, address, phone, email },
         certifications,
         status: "pending",
@@ -65,12 +65,12 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "DELETE") {
     const { id } = req.query;
-    const vendorId = session.user.id;
+    const userId = session.user.id;
 
     try {
 
-      // Find the application that matches both vendorId and applicationId
-      const vendorApplication = await Vendor.findOne({ _id: id, vendorId });
+      // Find the application that matches both userId and applicationId
+      const vendorApplication = await Vendor.findOne({ _id: id, userId });
 
       if (!vendorApplication) {
         return res.status(404).json({ message: "Application not found or you are not authorized to delete it." });

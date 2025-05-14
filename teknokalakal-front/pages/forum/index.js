@@ -7,8 +7,7 @@ import Link from "next/link";
 import Center from "@/components/Center";
 import LikeIcon from "@/components/icons/LikeIcon";
 import UnlikeIcon from "@/components/icons/UnlikeIcon";
-import { toast } from "react-toastify";
-import Swal from "sweetalert2";
+import swal from "sweetalert2";
 
 export default function ForumPage() {
   const [posts, setPosts] = useState([]);
@@ -45,7 +44,7 @@ export default function ForumPage() {
         )
       );
     } catch (err) {
-      toast.error("Error updating votes:", err);
+      swal.fire("Error updating votes:", err,"error");
     }
   };
 
@@ -53,9 +52,9 @@ export default function ForumPage() {
     try {
       const { data } = await axios.delete("/api/forum", { data: { postId } });
       setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
-      toast.success(data.message);
+      swal.fire("",data.message,"success");
     } catch (err) {
-      toast.error("Error deleting post:", err.response?.data?.error || err.message);
+      swal.fire("Error deleting post:", err.response?.data?.error || err.message,"error");
     }
   };
 
@@ -167,7 +166,7 @@ export default function ForumPage() {
                 {currentUser?.id === post.userId?._id && (
                   <button
                     onClick={() => {
-                      Swal.fire({
+                      swal.fire({
                         title: "Do you want to delete the Post?",
                         text: "You won't be able to undo this action!",
                         icon: "warning",

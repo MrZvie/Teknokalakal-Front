@@ -42,7 +42,7 @@ const VendorPage = () => {
     }
   
     try {
-      const applicationRes = await axios.get(`/api/vendor?vendorId=${session.user.id}`);
+      const applicationRes = await axios.get(`/api/vendor?userId=${session.user.id}`);
   
       // Check if the response has the 'message' key for no application
       if (applicationRes.data.message) {
@@ -108,7 +108,7 @@ const VendorPage = () => {
 
   try {
     const data = {
-      vendorId: session.user.id,
+      userId: session.user.id,
       ...formData,
       certifications: uploadedImages.map((image) => ({ public_id: image.public_id, link: image.link })),
     };
